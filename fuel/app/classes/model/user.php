@@ -22,7 +22,8 @@ class Model_User extends \Orm\Model
 		'zip_code',
 		'budget',
 	);
-
+	// I don't think these observers are doing anything right now. Revisit their role.
+	/*
 	protected static $_observers = array(
 		'Orm\Observer_CreatedAt' => array(
 			'events' => array('before_insert'),
@@ -33,50 +34,7 @@ class Model_User extends \Orm\Model
 			'mysql_timestamp' => false,
 		),
 	);
-
-	public static function get_account_status($auth)
-	{
-		// Should this be more about a request status, rather than account status?
-		// What do I care about letting someone know regarding their account?
-		// ADD: Once I get into requests, I should also create a function to check the status of that to inform the user
-		// ADD: Check for existence of an account_status Session var...if it doesn't exist, create it?
-		// ADD: update_account_status($auth) - Update based on changes to budget, # friends, and Save account as well
-		// Budget is 0 (only in case of first-time users)
-		$budget = $auth->get_profile_fields('budget');
-		// Initial user
-		if ($budget == 0)
-		{
-			// Suspend service
-			// Are they still in registration session?
-				// Yes
-					// Add instructional message to array.
-				// No
-					// Add warning message to array.
-		}
-		$num_friends = count(Model_User::get_friends($auth));
-		// Friends > 0
-		if ($num_friends == 0)
-		{
-			// Suspend service
-			// Are they still in registration session?
-				// Yes
-					// Add instructional message to array.
-				// No
-					// Add warning message to array.
-		}
-		// Friends between 1-4, encourage adding more
-		elseif ($num_friends <= 4)
-		{
-			// Add instructional message to array.
-		}
-		// Is Venmo connected?
-		// Can I return a profile using my auth key?
-			// No
-				// Suspend service. Ask user to reconnect to Venmo. 
-				// ADD: Callback router for reconnecting Venmo account.
-		// ADD: Return a status object with status, cautions, and warnings?
-	}
-
+	*/
 	public static function get_account(Fieldset $form, $auth)
 	{
 		$profile = $auth->get_profile_fields();
@@ -372,12 +330,4 @@ class Model_User extends \Orm\Model
 		return $venmo_friends;
 	}
 
-	// This will need to be moved somewhere, probably. Or break this down into sub-models.
-	public static function create_request($auth)
-	{
-		// ADD: Function to determine if a request should be generated or not
-		// Retrieve the user's friends
-			// After a request goes through, how do I move friend to an inactive list? Friend should have 2 states. Active/Inactive. If they have previously provided a Venmo account to use, should I keep that ID on file as well for repayment? If they're coming from Venmo already, that would make total sense. Def. should be included in the friends table.
-		// Pick one at random
-	}
 }

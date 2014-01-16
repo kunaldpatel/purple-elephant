@@ -76,6 +76,8 @@ class Controller_User extends Controller_Template
 		$view = View::forge('user/dashboard');
 		$auth = Auth::instance();
 
+		Model_Request::charge_user($auth);
+		
 		// Init Budget
 		$budget_form = Fieldset::forge('budget');
 		Model_User::get_budget($budget_form, $auth);

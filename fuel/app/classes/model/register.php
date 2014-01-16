@@ -37,7 +37,7 @@ class Model_Register extends \Orm\Model
 	{
 		// Create curl request
 		// I should move the params out of this function and into constants, perhaps. Also hidden in another file?
-		$curl = Request::forge('https://api.venmo.com/oauth/access_token', 'curl');
+		$curl = Request::forge('https://api.venmo.com/v1/oauth/access_token', 'curl');
 		// Exchange auth code for token via server-side $_POST request
 		$curl->set_method('post');
 		// Input auth code and app data
@@ -78,10 +78,9 @@ class Model_Register extends \Orm\Model
 		// Add Venmo info where applicable
 		$form->populate(array(
 			'email' => $venmo->email,
-			'first_name' => $venmo->firstname,
-			'last_name' => $venmo->lastname,
+			'first_name' => $venmo->first_name,
+			'last_name' => $venmo->last_name,
 			));
-
 		return $form;
 	}
 
@@ -165,11 +164,13 @@ class Model_Register extends \Orm\Model
 		try
 		{
 			list(, $user_id) = $auth->get_user_id();
+			// I should change expiry time to unix time + expires_in
+			// Do I need created_at or updated_at? Wouldn't hurt to add created_at, right?
 			$result = DB::insert('venmo')->set(array(
 				'user_id' => $user_id,
 				'venmo_id' => $venmo->user->id,
 				'access_token' => $venmo->access_token,
-				'expires_in' => $venmo->expires_in,
+				'expires_in' => time() + $venmo->expires_in,
 				'refresh_token' => $venmo->refresh_token,
 				))->execute();
 		}

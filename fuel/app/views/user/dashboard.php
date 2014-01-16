@@ -31,7 +31,7 @@
 				<p>How about starting with 4?</p>
 			<!-- Returning User / Has friends -->
 			<?php else : ?>
-				<h2>One of your {num} friends will pick your next gift.</h2>
+				<h2>One of your <?php echo count($friends); ?> friends will pick your next gift.</h2>
 				<p>If you add {num} more friends, it will ensure a different person picks each gift for the rest of the year.</p>
 			<?php endif; ?>
 		</div>
