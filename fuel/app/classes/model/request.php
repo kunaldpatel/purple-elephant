@@ -14,77 +14,68 @@ class Model_Request extends \Orm\Model
 		'user_debit_id',         // venmo charge to user
 		'friend_payment_id',     // venmo payment to friend
 	);
-	/*
-	// Ensure their account is in good standing:
-	public static function get_account_status($auth)
+
+	protected static $_observers = array(
+		'Orm\Observer_CreatedAt' => array(
+			'events' => array('before_insert'),
+			'mysql_timestamp' => false,
+		),
+		'Orm\Observer_UpdatedAt' => array(
+			'events' => array('before_save'),
+			'mysql_timestamp' => false,
+		),
+	);
+	
+	// Ensure the User's account is in good standing, and update as needed:
+	public static function check_account_status($auth)
 	{
-		$status = array();
-		// For a given user
-		// Venmo account is active?
-		// This only returns whether or not I have an access token for the person, when it expires, etc.
-		// I need to add a function to renew Venmo tokens once they expire eventually
-		// At least if they have one at this point, I can continue, if not then I stop immediately and list the problem.
+		// This array should be returned to the user if there are any problems with their account
+		// Unsure how I would do this? Send an email? Post on dashboard? Probably both
+		// Check if there is still a record for a Venmo account associated with this user
 		$venmo_auth = Model_User::get_venmo_auth($auth);
-		// If there were errors
+		// If there was trouble retrieving a record
 		if (array_key_exists('e_found', $venmo_auth))
 		{
 			// Return the error array
-			Log::error(print_r($venmo_auth['errors'], true), 'get_account_status()');
-			// I should probably build an errors array...
+			// This would go into a status
+			Log::error(print_r($venmo_auth['errors'], true), 'check_account_status()');
 			return false;
 		}
-		// Budget is set (should be after init reg., but confirm anyway)
-		$budget = $auth->get_profile_fields('budget');
+		// Renew user's Venmo OAuth token if it has expired
+		if ($venmo_auth['expires_in'] < time())
+		{
+			// Renew token, probably should save to a var?
+			Model_Request::renew_token($venmo_auth);
+			// Continue with new token (maybe just update value of $venmo_auth['access_token'] so I don't have to make another DB call)
+		}
 		// Minimum number of friends are saved (at least 3 at all times? What do I do about past friends vs. ones who recently picked?)
 		$friends = Model_User::get_friends($auth);
 		$num_friends = count($friends);
 		if ($num_friends < 4) 
 		{
-			Log::error('User only has '.$num_friends.' friends.', 'get_account_status()');
+			Log::error('User only has '.$num_friends.' friends.', 'check_account_status()');
 			return false;
 		}
 		return true;
 	}
-	*/
+
 	// Charge the User, THEN generate a request upon confirmation...
 	// When do I know when confirmation happens? Flow chart this shit
 	public static function charge_user($auth)
 	{
-		// Steps
-		// Check if the user has enough friends
-		$friends = Model_User::get_friends($auth);
-		$num_friends = count($friends);
-		// This should be a constant
-		/*
-		$threshold = 4;
-		if ($num_friends < $threshold) 
-		{
-			$target = $threshold - $num_friends;
-			Log::error('User needs to add '.$target.' friends.', 'create_request');
-			return false;
-		}
-		*/
-		// Transfer their budget to me
+		// Retrieve user's budget
+		// Maybe this could be passed in to the function, depending on how I handle this?
 		$budget = $auth->get_profile_fields('budget');
-		// Get their venmo auth array
+		// Retrieve User's venmo OAuth info
 		$venmo_auth = Model_User::get_venmo_auth($auth);
-		// If the user's OAuth access_token has expired...
-		if ($venmo_auth['expires_in'] < time())
-		{
-			// Renew token, probably should save to a var?
-			// Make sure renew_token returns a value
-			$new_tokens = Model_Request::renew_token($venmo_auth);
-			// Save new access token
-			// Continue with new token (maybe just update value of $venmo_auth['access_token'] so I don't have to make another DB call)
-		}
-		// Charge the User
-		//Model_Request::request_payment($venmo_auth['venmo_id'], $venmo_auth['access_token'], $budget);
+		// Request Payment
+		Model_Request::request_payment($venmo_auth['venmo_id'], $venmo_auth['access_token'], $budget);
 		// Store payment id, balance, user id in a db table
 		// Pick a random friend
 	}
 
 	// Get money from user
-	public static function request_payment($id, $token, $charge)
+	public static function request_payment($id, $token, $amount)
 	{
 		// Sandbox
 		$request = 'https://sandbox-api.venmo.com/payments';
@@ -100,9 +91,9 @@ class Model_Request extends \Orm\Model
 		// For now, stick with email address? I can't, because the user may choose a different address.
 		$data = array(
 			'user_id' => $id, 
-			'amount' => -0.01, 
-			'note' => 'noted', 
-			'access_token' => 'jsBJVVUUCV7fcSzk7pD8rupXVwDyQgvE'
+			'amount' => -0.01,    //$amount 
+			'note' => 'noted',    //$note - needs a var 
+			'access_token' => 'jsBJVVUUCV7fcSzk7pD8rupXVwDyQgvE'    //$token
 			);
 		*/
 		$curl = Request::forge($request, 'curl');
@@ -115,10 +106,20 @@ class Model_Request extends \Orm\Model
 			if ($response->status == 200)
 			{
 				// Convert response from JSON into PHP Std Object.
-				$record = json_decode($response->body);
-				print_r($record);
-				// Set the return object
-				//return $charge_record;
+				$result = json_decode($response->body);
+				// Focus on the payment section
+				$payment = $result->payment;
+				// A unique identifier for a payment.
+				$id = $payment->id;
+				// The datetime this payment was created. The datetime is in ISO 8601 format.
+				$created_at = $payment->date_created;
+				// The datetime this payment was completed. The datetime is in ISO 8601 format. Payments with a 'pending' status will have a 'null' date_completed value.
+				$completed_at = $payment->date_completed;
+				// The possible values are 'settled', 'pending', 'failed', 'expired' and 'cancelled'.
+				$status = $payment->status;
+				// User's Purple Elephant id
+				$user_id = $id;
+				// Save the relevant vars to DB
 			}
 		} 
 		catch (Exception $e) 
@@ -132,10 +133,10 @@ class Model_Request extends \Orm\Model
 
 	// Renew access token
 	// This will need more work
-	public static function renew_token($venmo)
+	public static function renew_token($venmo_auth)
 	{
 		// Get refresh token
-		$refresh_token = $venmo['refresh_token'];
+		$refresh_token = $venmo_auth['refresh_token'];
 		// Make a new call to the API
 		// Sandbox?
 		//$request = 'https://sandbox-api.venmo.com/oauth/access_token';
@@ -155,6 +156,7 @@ class Model_Request extends \Orm\Model
 			$curl->execute();
 			$response = $curl->response();
 			Log::error(print_r($response, true), 'renew_token()');
+			// I should update the user's Venmo record to save the new tokens
 		} 
 		catch (Exception $e) 
 		{
