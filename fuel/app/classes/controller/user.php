@@ -48,7 +48,7 @@ class Controller_User extends Controller_Template
 		Model_User::get_account($account_form, $auth);
 		// Request Venmo profile (and therefore status)
 		$venmo_profile = Model_User::get_venmo_profile($auth);
-
+		Log::error(print_r($venmo_profile, true), 'action_account()');
 		// If someone tries to save changes to their settings
 		if (Input::post())
 		{
@@ -83,6 +83,8 @@ class Controller_User extends Controller_Template
 		Model_User::get_budget($budget_form, $auth);
 		
 		// Init Friends
+		// I wonder if I could have the friends array be returned from check_account_status to save an extra call?
+		// Perhaps not if check_account_status() is moved into a task. I would need some global access to common functions
 		$friends = Model_User::get_friends($auth);
 		if (array_key_exists('e_found', $friends))
 		{

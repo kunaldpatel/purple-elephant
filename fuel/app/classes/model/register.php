@@ -129,7 +129,7 @@ class Model_Register extends \Orm\Model
 					'city' => $val['city'],
 					'state' => $val['state'],
 					'zip_code' => $val['zip_code'],
-					'gift_budget' => 0
+					'budget' => 0
 				));
 		}
 		catch (Exception $e)

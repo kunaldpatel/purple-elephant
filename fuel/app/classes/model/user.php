@@ -23,7 +23,6 @@ class Model_User extends \Orm\Model
 		'budget',
 	);
 	// I don't think these observers are doing anything right now. Revisit their role.
-	/*
 	protected static $_observers = array(
 		'Orm\Observer_CreatedAt' => array(
 			'events' => array('before_insert'),
@@ -34,7 +33,7 @@ class Model_User extends \Orm\Model
 			'mysql_timestamp' => false,
 		),
 	);
-	*/
+	
 	public static function get_account(Fieldset $form, $auth)
 	{
 		$profile = $auth->get_profile_fields();
@@ -245,7 +244,7 @@ class Model_User extends \Orm\Model
 		// Should prob work in error handling for this as well
 		$venmo_auth = Model_User::get_venmo_auth($auth);
 		// Build request string for user profile query
-		$request = 'https://api.venmo.com/users/'.$venmo_auth['venmo_id'].'?access_token='.$venmo_auth['access_token'];
+		$request = 'https://api.venmo.com/v1/users/'.$venmo_auth['venmo_id'].'?access_token='.$venmo_auth['access_token'];
 		// Create and execute cURL request
 		$curl = Request::forge($request, 'curl');
 		try 
@@ -280,7 +279,10 @@ class Model_User extends \Orm\Model
 			// add extra results onto the end of a stripped friends array (to remove any unnecessary parts)
 		$venmo_friends = array();
 		$continue = true;
+		// Sandbox
 		$request = 'https://sandbox-api.venmo.com/users/'.$venmo_auth['venmo_id'].'/friends?access_token='.$venmo_auth['access_token'];
+		// Live
+		//$request = 'https://api.venmo.com/v1/users/'.$venmo_auth['venmo_id'].'/friends?access_token='.$venmo_auth['access_token'];
 		$next_page = '';
 		// While I have friends to retrieve
 		while ($continue == true) {
