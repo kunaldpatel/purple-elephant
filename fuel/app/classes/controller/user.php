@@ -103,6 +103,7 @@ class Controller_User extends Controller_Template
 		// Suggesting a friend from Venmo
 		//$venmo_friends = Model_User::get_venmo_friends($auth);
 		$venmo_friends = array();
+        $post = Input::post();
 		// Manage updates
 		// Check if there's an action to run
 		if ($section)
@@ -113,7 +114,7 @@ class Controller_User extends Controller_Template
 					if ($action == 'update')
 					{
 						// Updating budget
-						if (!empty(Input::post('budget_submit')))
+						if (!empty($post['budget_submit']))
 						{
 							$budget_form->repopulate();
 							$result = Model_User::update_budget($budget_form, $auth);
@@ -134,7 +135,7 @@ class Controller_User extends Controller_Template
 					switch ($action)
 					{
 						case 'add':
-							if (!empty(Input::post('friend_submit')))
+							if (!empty($post['friend_submit']))
 							{
 								$input_friend->repopulate();
 								$result = Model_User::add_friend($input_friend, $auth);

@@ -6,7 +6,7 @@ class Controller_Register extends Controller_Template
 	public function action_index()
 	{
 		$view = View::forge('register/index');
-		$venmo_link = 'https://api.venmo.com/v1/oauth/authorize?client_id=1530&scope=ACCESS_PROFILE,ACCESS_EMAIL, ACCESS_FRIENDS,MAKE_PAYMENTS&response_type=code';
+		$venmo_link = 'https://api.venmo.com/v1/oauth/authorize?client_id=1530&scope=ACCESS_PROFILE,ACCESS_EMAIL,ACCESS_FRIENDS,MAKE_PAYMENTS&response_type=code';
 		$view->set('link', $venmo_link, false);
 		$this->template->title = 'Register &raquo; Connect to Venmo';
 		$this->template->content = $view;
