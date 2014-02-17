@@ -8,7 +8,7 @@ return array(
 		'connection'  => array(
 			'dsn'        => 'mysql:host=localhost;dbname=purple_elephant',
 			'username'   => 'root',
-			'password'   => 'ruut',
+			'password'   => 'root',
 		),
 	),
 );
